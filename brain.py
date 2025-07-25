@@ -1,7 +1,7 @@
 import pyttsx3
 import datetime
 import speech_recognition as sr
-from arduino_interface import ser
+from arduino_interface import ser, read_sensor
 
 
 def speak(audio):
@@ -40,99 +40,40 @@ def led1off():
     ser.write(b'a')
     speak("LED 2 turned off")
 
+def check_flood():
+    sensor_data = read_sensor()
+    if sensor_data and sensor_data >= 350:
+        speak("Flood alert! Water level critical. Cutting power.")
+        ser.write(b'a')  # Force power off
+        return True
+    return False
+
+
 def Logic():
-    query = takeCommandMic().lower()
-    if 'keep charging' in query:
+    # Check flood first
+    if check_flood():
+        return
+
+    query = takeCommandMic()
+    if not query:
+        return
+
+    query = query.lower()
+
+    # Power ON commands
+    if any(k in query for k in [
+        'keep charging', 'connect charger', 'supply power',
+        'charge my laptop', 'charge my phone', 'activate the power',
+        'boot up', 'power on', 'power up', 'start charging'
+    ]) or ('on' in query and ('power' in query or 'charge' in query)):
         led1on()
-    elif "that's fine" in query:
+        speak("Power activated")
+
+    # Power OFF commands
+    elif any(k in query for k in [
+        'stop charging', 'disconnect', 'stop supplying power',
+        'power off', 'shut down','shut down', "that's fine", 'continue'
+    ]) or ('off' in query and ('power' in query or 'charge' in query)):
         led1off()
+        speak("Power deactivated")
 
-    elif 'cheap charger' in query:
-        led1on()
-    elif 'continue' in query:
-        led1on()
-    elif 'keep charging' in query:
-        speak("Okay, I will keep charging")
-
-    elif "that's fine" in query:
-        speak("Okay, I will keep charging")
-
-    elif 'stop charging' in query:
-        speak("Okay, I will stop charging")
-
-    elif 'stop' in query:
-        speak("Okay, I will stop charging")
-
-    elif 'cheap charger' in query:
-        speak("Okay, I will keep charging")
-
-    elif 'continue' in query:
-        speak("Okay, I will continue charging")
-
-    elif 'stop supplying power' in query:
-        speak("Okay, I will stop supplying power")
-
-    elif 'disconnect' in query:
-        speak("Okay, I will disconnect the charger")
-
-    elif 'connect charger' in query:
-        speak("Okay, conecting charger")
-
-    elif 'supply power' in query:
-        speak("Okay, I will supply power")
-
-    elif 'supply park' in query:
-        speak("Okay, I will supply power")
-
-    elif 'supply bar' in query:
-        speak("Okay, I will supply power")
-
-    elif 'to play power' in query:
-        speak("Okay, I will supply power")
-
-    elif 'power on' in query:
-        speak("Okay, I will turn on the power")
-
-    elif 'power off' in query:
-        speak("Okay, I will turn off the power")
-
-    elif 'keep Char' in query:
-        speak("Okay, I will keep charging")
-
-    elif 'top supplies' in query:
-        speak("Okay, I will stop supplying power")
-
-    elif 'on' in query:
-        speak("Okay, I will turn on the power")
-
-    elif 'off' in query:
-        speak("Okay, I will turn off the power")
-
-    elif 'charge my laptop' in query:
-        speak("Okay, I will charge your laptop")
-
-    elif 'charge my phone' in query:
-        speak("Okay, I will charge your phone")
-
-    elif 'activate the power' in query:
-        speak("Okay, activating power")
-
-    elif 'boot up' in query:
-        speak("Okay, turning on the power")
-
-    elif 'power up' in query:
-        speak("Okay, powering up the system")
-
-    elif 'start up' in query:
-        speak("Okay, starting up the system")
-
-    elif 'power' in query:
-        speak("Okay, I will supply power")
-
-    elif 'start' in query:
-        speak("Okay, I will start the system")
-
-    elif 'shutdown' in query:
-        speak("Okay, I will shutdown the system")
-    elif 'stop' in query:
-        speak("Okay, I will stop the system")
